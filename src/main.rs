@@ -8,7 +8,8 @@ mod transactions;
 use engine::Engine;
 
 fn main() {
-    // Initiate engine and pass the reference to the global state
+    
+    // Initiate engine
     let mut engine = Engine::new();
 
     // Read transactions from the csv file in arguments
