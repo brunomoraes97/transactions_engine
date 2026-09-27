@@ -253,19 +253,72 @@ mod tests {
 
     #[test]
     fn dispute_happens_normally() {
-        // TODO: use arrange + act + assert
+        // Arrange
+        let mut account = Account::new_with_fields(
+            1,
+            Decimal::new(10, 0),
+            Decimal::ZERO,
+            false,
+            Decimal::new(10, 0),
+        );
+        let disputed_amount = Decimal::new(5, 0);
+
+        // Act
+        let result = account.dispute(&disputed_amount);
+
+        // Assert
+        assert!(result.is_ok());
+        assert_eq!(account.available, Decimal::new(5, 0));
+        assert_eq!(account.held, Decimal::new(5, 0));
+        assert_eq!(account.total, Decimal::new(10, 0));
+        assert!(!account.locked);
     }
 
     #[test]
     fn dispute_does_not_happen_with_invalid_amount() {
-        // TODO: use arrange + act + assert
+        // Arrange
+        let mut account = Account::new_with_fields(
+            1,
+            Decimal::new(10, 0),
+            Decimal::ZERO,
+            false,
+            Decimal::new(10, 0),
+        );
+        let invalid_amount = Decimal::ZERO;
+
+        // Act
+        let result = account.dispute(&invalid_amount);
+
+        // Assert
+        assert!(matches!(result, Err(AccountError::InvalidAmount)));
+        assert_eq!(account.available, Decimal::new(10, 0));
+        assert_eq!(account.held, Decimal::ZERO);
+        assert_eq!(account.total, Decimal::new(10, 0));
+        assert!(!account.locked);
     }
 
     #[test]
     fn dispute_does_not_happen_with_locked_account() {
-        // TODO: use arrange + act + assert
+        // Arrange
+        let mut account = Account::new_with_fields(
+            1,
+            Decimal::new(10, 0),
+            Decimal::ZERO,
+            true,
+            Decimal::new(10, 0),
+        );
+        let disputed_amount = Decimal::new(5, 0);
+
+        // Act
+        let result = account.dispute(&disputed_amount);
+
+        // Assert
+        assert!(matches!(result, Err(AccountError::AccountLocked)));
+        assert_eq!(account.available, Decimal::new(10, 0));
+        assert_eq!(account.held, Decimal::ZERO);
+        assert_eq!(account.total, Decimal::new(10, 0));
+        assert!(account.locked);
     }
 
 
 }
-
