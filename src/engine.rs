@@ -16,7 +16,7 @@ impl Engine {
         }
     }
 
-    pub fn process(self: &mut Self, transaction_attempt: TransactionAttempt) {
+    pub fn process(&mut self, transaction_attempt: TransactionAttempt) {
         match transaction_attempt.transaction_type() {
             TransactionType::Deposit => self.deposit(transaction_attempt),
             TransactionType::Withdrawal => self.withdraw(transaction_attempt),
