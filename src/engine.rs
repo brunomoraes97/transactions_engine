@@ -72,7 +72,10 @@ impl Engine {
         let tx = *transaction_attempt.tx();
 
         let (client_id, amount_disputed) = match self.state.get_successful_transaction(&tx) {
-            Some(transaction) if !*transaction.in_dispute() => {
+            Some(transaction)
+                if transaction.client_id() == transaction_attempt.client_id()
+                    && !*transaction.in_dispute() =>
+            {
                 (*transaction.client_id(), *transaction.amount())
             }
             Some(_) | None => return,
