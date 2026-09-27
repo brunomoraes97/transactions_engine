@@ -1,4 +1,4 @@
-use crate::{accounts::Account, state::State, transactions::{TransactionAttempt, TransactionType}};
+use crate::{state::State, transactions::{TransactionAttempt, TransactionType}};
 
 pub struct Engine {
     state: State
@@ -16,14 +16,13 @@ impl Engine {
 
         match transaction_attempt.transaction_type() {
             TransactionType::Deposit => self.deposit(transaction_attempt),
-            TransactionType::Withdrawal => self.withdraw(&transaction),
-            TransactionType::Dispute => self.dispute(&transaction),
-            TransactionType::Resolve => self.resolve(&transaction),
-            TransactionType::Chargeback => self.chargeback(&transaction),
+            TransactionType::Withdrawal => todo!(),
+            TransactionType::Dispute => todo!(),
+            TransactionType::Resolve => todo!(),
+            TransactionType::Chargeback => todo!(),
         }
 
 }
-
 
     pub fn deposit(&mut self, transaction_attempt: TransactionAttempt) {
         
@@ -48,6 +47,8 @@ impl Engine {
             }
         }
     }
+
+    /*
 
     pub fn withdraw(&mut self, transaction: &Transaction) {
         let account = self.get_or_create_account(transaction.client_id());
@@ -149,6 +150,65 @@ impl Engine {
 
         stdout_writer.flush().unwrap();
 
+    }
+
+
+    */
+}
+
+#[cfg(test)]
+mod tests {
+
+    use rust_decimal::Decimal;
+
+    use super::*;
+
+    #[test]
+    fn state_is_correctly_changed_after_successful_deposit() {
+        let mut engine = Engine::new();
+        let client_id = 1;
+        let attempt = TransactionAttempt::new_with_fields(
+            TransactionType::Deposit,
+            client_id,
+            1,
+            Decimal::new(5,0)
+        );
+
+        engine.deposit(attempt);
+
+        let account_deposited = engine
+            .state
+            .get_account(&client_id)
+            .expect("account should be created");
+
+        assert_eq!(
+            account_deposited.available(),
+            &Decimal::new(5,0)
+        );
+    }
+
+    #[test]
+    fn state_is_not_changed_after_unsuccessful_deposit() {
+        
+        let mut engine = Engine::new();
+        let client_id = 1;
+        let attempt = TransactionAttempt::new_with_fields(
+            TransactionType::Deposit,
+            client_id,
+            1,
+            Decimal::new(-1,2)
+        );
+
+        engine.deposit(attempt);
+        let account_deposited = engine
+            .state
+            .get_account(&client_id)
+            .expect("account should be created with default values");
+
+        assert_eq!(
+            account_deposited.available(),
+            &Decimal::new(0,0)
+        );
     }
 
 }

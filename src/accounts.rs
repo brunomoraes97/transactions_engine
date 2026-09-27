@@ -1,6 +1,8 @@
 use rust_decimal::Decimal;
+use getset::Getters;
 
-#[derive(Debug, serde::Serialize)]
+#[derive(Debug, serde::Serialize, Getters)]
+#[getset(get="pub")]
 pub struct Account {
     client_id: u16,
     available: Decimal,
@@ -10,7 +12,7 @@ pub struct Account {
 }
 #[derive(Debug)]
 pub enum AccountError {
-    InsufficientFunds,
+    //InsufficientFunds,
     InvalidAmount,
     AccountLocked,
 }
@@ -61,6 +63,7 @@ impl Account {
         Ok(())
     }
 
+    /*
     pub fn withdraw(&mut self, amount: &Decimal) -> Result<(), AccountError> {
 
         if *amount <= Decimal::ZERO {
@@ -120,6 +123,8 @@ impl Account {
 
         Ok(())
     }
+
+    */
 
 }
 

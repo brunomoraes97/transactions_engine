@@ -15,6 +15,10 @@ impl State {
         }
     }
 
+    pub fn get_account(&mut self, account_id: &u16) -> Option<&mut Account> {
+        self.accounts_registry.get_mut(account_id)
+    }
+
     pub fn get_or_create_account(&mut self, account_id: &u16) -> &mut Account {
 
        self.accounts_registry
