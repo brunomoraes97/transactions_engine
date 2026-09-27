@@ -71,9 +71,7 @@ impl TransactionAttempt {
 impl From<TransactionAttempt> for SuccessfulTransaction {
     fn from(attempt: TransactionAttempt) -> Self {
         let TransactionAttempt {
-            client_id,
-            amount,
-            ..
+            client_id, amount, ..
         } = attempt;
 
         Self {

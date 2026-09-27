@@ -431,9 +431,7 @@ mod tests {
             false,
             Decimal::new(4, 0),
         );
-        *engine
-            .state
-            .get_or_create_account(&transaction_owner_id) = owner_account;
+        *engine.state.get_or_create_account(&transaction_owner_id) = owner_account;
 
         let successful_transaction = TransactionAttempt::new_with_fields(
             TransactionType::Deposit,
@@ -632,9 +630,7 @@ mod tests {
             false,
             Decimal::new(4, 0),
         );
-        *engine
-            .state
-            .get_or_create_account(&transaction_owner_id) = owner_account;
+        *engine.state.get_or_create_account(&transaction_owner_id) = owner_account;
 
         let successful_transaction = TransactionAttempt::new_with_fields(
             TransactionType::Deposit,
@@ -827,9 +823,7 @@ mod tests {
             false,
             Decimal::new(4, 0),
         );
-        *engine
-            .state
-            .get_or_create_account(&transaction_owner_id) = owner_account;
+        *engine.state.get_or_create_account(&transaction_owner_id) = owner_account;
 
         let successful_transaction = TransactionAttempt::new_with_fields(
             TransactionType::Deposit,
