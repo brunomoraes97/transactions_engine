@@ -414,6 +414,65 @@ mod tests {
     }
 
     #[test]
+    fn dispute_is_ignored_when_transaction_belongs_to_another_client() {
+        // Arrange
+        let mut engine = Engine::new();
+        let transaction_owner_id = 7;
+        let requesting_client_id = 8;
+        let transaction_id = 20;
+
+        let owner_account = Account::new_with_fields(
+            transaction_owner_id,
+            Decimal::new(4, 0),
+            Decimal::ZERO,
+            false,
+            Decimal::new(4, 0),
+        );
+        *engine
+            .state
+            .get_or_create_account(&transaction_owner_id) = owner_account;
+
+        let successful_transaction = TransactionAttempt::new_with_fields(
+            TransactionType::Deposit,
+            transaction_owner_id,
+            transaction_id,
+            Decimal::new(4, 0),
+        );
+        engine
+            .state
+            .save_successful_transaction(successful_transaction);
+
+        let dispute_attempt = TransactionAttempt::new_with_fields(
+            TransactionType::Dispute,
+            requesting_client_id,
+            transaction_id,
+            Decimal::ZERO,
+        );
+
+        // Act
+        engine.process(dispute_attempt);
+
+        // Assert
+        let owner_account = engine
+            .state
+            .get_account(&transaction_owner_id)
+            .expect("transaction owner's account should still exist");
+
+        assert_eq!(owner_account.available(), &Decimal::new(4, 0));
+        assert_eq!(owner_account.held(), &Decimal::ZERO);
+        assert_eq!(owner_account.total(), &Decimal::new(4, 0));
+        assert_eq!(owner_account.locked(), &false);
+        assert!(engine.state.get_account(&requesting_client_id).is_none());
+
+        let transaction = engine
+            .state
+            .get_successful_transaction(&transaction_id)
+            .expect("successful transaction should still exist");
+
+        assert_eq!(transaction.in_dispute(), &false);
+    }
+
+    #[test]
     fn state_is_correctly_changed_after_successful_resolve() {
         // Arrange
         let mut engine = Engine::new();
