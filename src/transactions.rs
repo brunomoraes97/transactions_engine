@@ -12,7 +12,7 @@ pub enum TransactionType {
 }
 
 #[derive(Debug, serde::Deserialize)]
-pub struct Transaction {
+pub struct TransactionAttempt {
     #[serde(rename="type")]
     transaction_type: TransactionType,
     #[serde(rename="client")]
@@ -21,7 +21,14 @@ pub struct Transaction {
     amount: Decimal,
 }
 
-impl Transaction {
+pub struct SuccessfulTransaction {
+    transaction_type: TransactionType,
+    client_id: u16,
+    tx: u32,
+    amount: Decimal,
+}
+
+impl TransactionAttempt {
 
     pub fn transaction_type(&self) -> &TransactionType {
         &self.transaction_type
@@ -37,5 +44,25 @@ impl Transaction {
 
     pub fn amount(&self) -> &Decimal {
         &self.amount
+    }
+}
+
+impl From<TransactionAttempt> for SuccessfulTransaction {
+
+    fn from(attempt: TransactionAttempt) -> Self {
+        
+        let TransactionAttempt {
+            transaction_type,
+            client_id,
+            tx,
+            amount,
+        } = attempt;
+
+        Self {
+            transaction_type,
+            client_id,
+            tx,
+            amount,
+        }
     }
 }

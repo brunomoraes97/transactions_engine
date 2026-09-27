@@ -1,28 +1,52 @@
-use crate::{accounts::{Account}, transactions::Transaction};
-use std::collections::HashMap;
+use crate::{accounts::Account, state::State, transactions::{TransactionAttempt, TransactionType}};
 
 pub struct Engine {
-    accounts: HashMap<u16, Account>,
-    transactions: HashMap<u32, Transaction>,
+    state: State
 }
 
 impl Engine {
 
     pub fn new() -> Self {
         Self {
-            accounts: HashMap::new(),
-            transactions: HashMap::new(),
+            state: State::new(),
         }
     }
 
-    pub fn deposit(&mut self, transaction: &Transaction) {
-        let account = self.get_or_create_account(transaction.client_id());
-        if let Err(error) = account.deposit(transaction.amount()) {
-            eprintln!(
-                "An error occurred: {:?}",
-                error,
-            )
+    pub fn process(self: &mut Self, transaction_attempt: TransactionAttempt) {
+
+        match transaction_attempt.transaction_type() {
+            TransactionType::Deposit => self.deposit(transaction_attempt),
+            TransactionType::Withdrawal => self.withdraw(&transaction),
+            TransactionType::Dispute => self.dispute(&transaction),
+            TransactionType::Resolve => self.resolve(&transaction),
+            TransactionType::Chargeback => self.chargeback(&transaction),
+        }
+
+}
+
+
+    pub fn deposit(&mut self, transaction_attempt: TransactionAttempt) {
+        
+        
+        let result = {
+
+            let account = self
+                .state
+                .get_or_create_account(transaction_attempt.client_id());
+            
+            account.deposit(transaction_attempt.amount())
+
         };
+
+        match result {
+            Ok(()) => {
+                self.state
+                    .save_successful_transaction(transaction_attempt);
+            }
+            Err(error) => {
+                eprintln!("An error occurred: {:?}", error);
+            }
+        }
     }
 
     pub fn withdraw(&mut self, transaction: &Transaction) {
@@ -105,14 +129,6 @@ impl Engine {
             )
         };
 
-
-    }
-
-    pub fn get_or_create_account(&mut self, account_id: &u16) -> &mut Account {
-
-       self.accounts
-            .entry(*account_id)
-            .or_insert_with(|| Account::new(*account_id))
 
     }
 

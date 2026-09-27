@@ -48,7 +48,7 @@ impl Account {
 
     pub fn deposit(&mut self, amount: &Decimal) -> Result<(), AccountError> {
 
-        if *amount == Decimal::ZERO {
+        if *amount <= Decimal::ZERO {
             return Err(AccountError::InvalidAmount);
         }
 
