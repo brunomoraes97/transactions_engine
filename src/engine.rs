@@ -1,11 +1,13 @@
-use crate::{state::State, transactions::{TransactionAttempt, TransactionType}};
+use crate::{
+    state::State,
+    transactions::{TransactionAttempt, TransactionType},
+};
 
 pub struct Engine {
-    state: State
+    state: State,
 }
 
 impl Engine {
-
     pub fn new() -> Self {
         Self {
             state: State::new(),
@@ -13,7 +15,6 @@ impl Engine {
     }
 
     pub fn process(self: &mut Self, transaction_attempt: TransactionAttempt) {
-
         match transaction_attempt.transaction_type() {
             TransactionType::Deposit => self.deposit(transaction_attempt),
             TransactionType::Withdrawal => self.withdraw(transaction_attempt),
@@ -21,26 +22,20 @@ impl Engine {
             TransactionType::Resolve => self.resolve(transaction_attempt),
             TransactionType::Chargeback => self.chargeback(transaction_attempt),
         }
-
-}
+    }
 
     pub fn deposit(&mut self, transaction_attempt: TransactionAttempt) {
-        
-        
         let result = {
-
             let account = self
                 .state
                 .get_or_create_account(transaction_attempt.client_id());
-            
-            account.deposit(transaction_attempt.amount())
 
+            account.deposit(transaction_attempt.amount())
         };
 
         match result {
             Ok(()) => {
-                self.state
-                    .save_successful_transaction(transaction_attempt);
+                self.state.save_successful_transaction(transaction_attempt);
             }
             Err(error) => {
                 eprintln!("An error occurred: {:?}", error);
@@ -49,50 +44,35 @@ impl Engine {
     }
 
     pub fn withdraw(&mut self, transaction_attempt: TransactionAttempt) {
-
         let result = {
-
             let account = self
                 .state
                 .get_or_create_account(transaction_attempt.client_id());
 
             account.withdraw(transaction_attempt.amount())
-
         };
 
         match result {
             Ok(()) => {
-                self.state
-                    .save_successful_transaction(transaction_attempt);
+                self.state.save_successful_transaction(transaction_attempt);
             }
             Err(error) => {
                 eprintln!("An error occurred: {:?}", error);
             }
         }
-
     }
 
     pub fn dispute(&mut self, transaction_attempt: TransactionAttempt) {
-
         let tx = *transaction_attempt.tx();
 
-        let (client_id, amount_disputed) = match self
-            .state
-            .get_successful_transaction(&tx)
-        {
-            Some(transaction) => (
-                *transaction.client_id(),
-                *transaction.amount(),
-            ),
+        let (client_id, amount_disputed) = match self.state.get_successful_transaction(&tx) {
+            Some(transaction) => (*transaction.client_id(), *transaction.amount()),
             None => return,
         };
 
         let result = {
-            let account = self
-                .state
-                .get_or_create_account(&client_id);
+            let account = self.state.get_or_create_account(&client_id);
             account.dispute(&amount_disputed)
-
         };
 
         if let Err(error) = result {
@@ -103,7 +83,6 @@ impl Engine {
     }
 
     pub fn resolve(&mut self, transaction_attempt: TransactionAttempt) {
-        
         let search_transaction = self
             .state
             .get_successful_transaction(transaction_attempt.tx());
@@ -117,25 +96,19 @@ impl Engine {
         let amount_disputed = *successful_transaction.amount();
 
         let result = {
-            let account = self
-                .state
-                .get_or_create_account(&client_id);
+            let account = self.state.get_or_create_account(&client_id);
             account.resolve(&amount_disputed)
         };
 
         if let Err(error) = result {
             eprintln!("An error occurred: {:?}", error);
         }
-        
-
     }
 
     pub fn chargeback(&mut self, transaction_attempt: TransactionAttempt) {
-
         let search_transaction = self
             .state
-            .get_successful_transaction(transaction_attempt.tx()
-        );
+            .get_successful_transaction(transaction_attempt.tx());
 
         let successful_transaction = match search_transaction {
             Some(transaction) => transaction,
@@ -146,27 +119,23 @@ impl Engine {
         let amount_disputed = *successful_transaction.amount();
 
         let result = {
-            let account = self
-                .state
-                .get_or_create_account(&client_id);
+            let account = self.state.get_or_create_account(&client_id);
             account.chargeback(&amount_disputed)
         };
 
         if let Err(error) = result {
             eprintln!("An error occurred: {:?}", error);
-        }   
-
+        }
     }
-
 }
 
 #[cfg(test)]
 mod tests {
 
-    use rust_decimal::Decimal;
     use crate::accounts::Account;
+    use rust_decimal::Decimal;
 
-use super::*;
+    use super::*;
 
     #[test]
     fn state_is_correctly_changed_after_successful_deposit() {
@@ -176,7 +145,7 @@ use super::*;
             TransactionType::Deposit,
             client_id,
             1,
-            Decimal::new(5,0)
+            Decimal::new(5, 0),
         );
 
         engine.deposit(attempt);
@@ -186,22 +155,18 @@ use super::*;
             .get_account(&client_id)
             .expect("account should be created");
 
-        assert_eq!(
-            account_deposited.available(),
-            &Decimal::new(5,0)
-        );
+        assert_eq!(account_deposited.available(), &Decimal::new(5, 0));
     }
 
     #[test]
     fn state_is_not_changed_after_unsuccessful_deposit() {
-        
         let mut engine = Engine::new();
         let client_id = 1;
         let attempt = TransactionAttempt::new_with_fields(
             TransactionType::Deposit,
             client_id,
             1,
-            Decimal::new(-1,2)
+            Decimal::new(-1, 2),
         );
 
         engine.deposit(attempt);
@@ -210,15 +175,11 @@ use super::*;
             .get_account(&client_id)
             .expect("account should be created with default values");
 
-        assert_eq!(
-            account_deposited.available(),
-            &Decimal::new(0,0)
-        );
+        assert_eq!(account_deposited.available(), &Decimal::new(0, 0));
     }
 
     #[test]
     fn state_is_correctly_changed_after_successful_withdrawal() {
-        
         let mut engine = Engine::new();
         let client_id = 1;
 
@@ -230,9 +191,7 @@ use super::*;
             Decimal::new(10, 0),
         );
 
-        let account = engine
-            .state
-            .get_or_create_account(&client_id);
+        let account = engine.state.get_or_create_account(&client_id);
 
         *account = mock_account;
 
@@ -252,12 +211,10 @@ use super::*;
 
         assert_eq!(account.available(), &Decimal::new(5, 0));
         assert_eq!(account.total(), &Decimal::new(5, 0));
-
     }
 
     #[test]
     fn state_is_not_changed_after_unsuccessful_withdrawal() {
-        
         let mut engine = Engine::new();
         let client_id = 1;
         let transaction_id = 1;
@@ -270,9 +227,7 @@ use super::*;
             Decimal::new(10, 0),
         );
 
-        *engine
-            .state
-            .get_or_create_account(&client_id) = mock_account;
+        *engine.state.get_or_create_account(&client_id) = mock_account;
 
         let attempt = TransactionAttempt::new_with_fields(
             TransactionType::Withdrawal,
@@ -317,9 +272,7 @@ use super::*;
             false,
             Decimal::new(10, 0),
         );
-        *engine
-            .state
-            .get_or_create_account(&client_id) = account;
+        *engine.state.get_or_create_account(&client_id) = account;
 
         let successful_transaction = TransactionAttempt::new_with_fields(
             TransactionType::Deposit,
@@ -382,7 +335,9 @@ use super::*;
             transaction_id,
             Decimal::new(5, 0),
         );
-        engine.state.save_successful_transaction(successful_transaction);
+        engine
+            .state
+            .save_successful_transaction(successful_transaction);
 
         let first_dispute = TransactionAttempt::new_with_fields(
             TransactionType::Dispute,
@@ -403,7 +358,9 @@ use super::*;
         engine.process(second_dispute);
 
         // Assert
-        let account = engine.state.get_account(&client_id)
+        let account = engine
+            .state
+            .get_account(&client_id)
             .expect("account should exist after a repeated dispute");
 
         assert_eq!(account.available(), &Decimal::new(5, 0));
@@ -426,9 +383,7 @@ use super::*;
             false,
             Decimal::new(10, 0),
         );
-        *engine
-            .state
-            .get_or_create_account(&client_id) = account;
+        *engine.state.get_or_create_account(&client_id) = account;
 
         let dispute_attempt = TransactionAttempt::new_with_fields(
             TransactionType::Dispute,
@@ -454,7 +409,6 @@ use super::*;
 
     #[test]
     fn state_is_correctly_changed_after_successful_resolve() {
-
         // Arrange
         let mut engine = Engine::new();
         let client_id = 1;
@@ -475,7 +429,9 @@ use super::*;
             transaction_id,
             Decimal::new(5, 0),
         );
-        engine.state.save_successful_transaction(successful_transaction);
+        engine
+            .state
+            .save_successful_transaction(successful_transaction);
         engine.state.mark_transaction_as_disputed(&transaction_id);
 
         let resolve_attempt = TransactionAttempt::new_with_fields(
@@ -534,7 +490,9 @@ use super::*;
         engine.process(resolve_attempt);
 
         // Assert
-        let account = engine.state.get_account(&client_id)
+        let account = engine
+            .state
+            .get_account(&client_id)
             .expect("account should still exist after a rejected resolve");
 
         assert_eq!(account.available(), &Decimal::new(5, 0));
@@ -565,7 +523,9 @@ use super::*;
             transaction_id,
             Decimal::new(5, 0),
         );
-        engine.state.save_successful_transaction(successful_transaction);
+        engine
+            .state
+            .save_successful_transaction(successful_transaction);
 
         let resolve_attempt = TransactionAttempt::new_with_fields(
             TransactionType::Resolve,
@@ -578,7 +538,9 @@ use super::*;
         engine.process(resolve_attempt);
 
         // Assert
-        let account = engine.state.get_account(&client_id)
+        let account = engine
+            .state
+            .get_account(&client_id)
             .expect("account should still exist after a rejected resolve");
 
         assert_eq!(account.available(), &Decimal::new(10, 0));
@@ -609,7 +571,9 @@ use super::*;
             transaction_id,
             Decimal::new(5, 0),
         );
-        engine.state.save_successful_transaction(successful_transaction);
+        engine
+            .state
+            .save_successful_transaction(successful_transaction);
         engine.state.mark_transaction_as_disputed(&transaction_id);
 
         let chargeback_attempt = TransactionAttempt::new_with_fields(
@@ -623,7 +587,9 @@ use super::*;
         engine.process(chargeback_attempt);
 
         // Assert
-        let account = engine.state.get_account(&client_id)
+        let account = engine
+            .state
+            .get_account(&client_id)
             .expect("account should exist after a successful chargeback");
 
         assert_eq!(account.available(), &Decimal::new(5, 0));
@@ -659,7 +625,9 @@ use super::*;
         engine.process(chargeback_attempt);
 
         // Assert
-        let account = engine.state.get_account(&client_id)
+        let account = engine
+            .state
+            .get_account(&client_id)
             .expect("account should still exist after a rejected chargeback");
 
         assert_eq!(account.available(), &Decimal::new(5, 0));
@@ -690,7 +658,9 @@ use super::*;
             transaction_id,
             Decimal::new(5, 0),
         );
-        engine.state.save_successful_transaction(successful_transaction);
+        engine
+            .state
+            .save_successful_transaction(successful_transaction);
 
         let chargeback_attempt = TransactionAttempt::new_with_fields(
             TransactionType::Chargeback,
@@ -703,7 +673,9 @@ use super::*;
         engine.process(chargeback_attempt);
 
         // Assert
-        let account = engine.state.get_account(&client_id)
+        let account = engine
+            .state
+            .get_account(&client_id)
             .expect("account should still exist after a rejected chargeback");
 
         assert_eq!(account.available(), &Decimal::new(10, 0));

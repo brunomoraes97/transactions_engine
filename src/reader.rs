@@ -4,17 +4,10 @@ use std::env;
 use std::io;
 use transactions::TransactionAttempt;
 
-
 pub fn get_transactions_from_csv() -> Result<Vec<TransactionAttempt>, Box<dyn std::error::Error>> {
-
     let file_path = env::args()
-    .nth(1)
-    .ok_or_else( || { 
-        io::Error::new(
-            io::ErrorKind::InvalidInput,
-            "Could not load csv file."
-        )
-        })?;
+        .nth(1)
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "Could not load csv file."))?;
 
     let mut csv_reader = csv::ReaderBuilder::new()
         .trim(csv::Trim::All)

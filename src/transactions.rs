@@ -1,6 +1,6 @@
+use getset::Getters;
 use rust_decimal::Decimal;
 use serde;
-use getset::Getters;
 
 #[derive(Debug, serde::Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -14,9 +14,9 @@ pub enum TransactionType {
 
 #[derive(Debug, serde::Deserialize)]
 pub struct TransactionAttempt {
-    #[serde(rename="type")]
+    #[serde(rename = "type")]
     transaction_type: TransactionType,
-    #[serde(rename="client")]
+    #[serde(rename = "client")]
     client_id: u16,
     tx: u32,
     amount: Decimal,
@@ -37,7 +37,6 @@ impl SuccessfulTransaction {
 }
 
 impl TransactionAttempt {
-
     #[cfg(test)]
     pub(crate) fn new_with_fields(
         transaction_type: TransactionType,
@@ -71,9 +70,7 @@ impl TransactionAttempt {
 }
 
 impl From<TransactionAttempt> for SuccessfulTransaction {
-
     fn from(attempt: TransactionAttempt) -> Self {
-        
         Self {
             client_id: *attempt.client_id(),
             amount: *attempt.amount(),
