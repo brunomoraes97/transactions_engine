@@ -1,6 +1,6 @@
 use rust_decimal::Decimal;
 
-#[derive(Debug, Clone, Copy, serde::Serialize)]
+#[derive(Debug, serde::Serialize)]
 pub struct Account {
     client_id: u16,
     available: Decimal,
@@ -20,25 +20,25 @@ impl Account {
         }
     }
 
-    pub fn deposit(&mut self, amount: Decimal) {
+    pub fn deposit(&mut self, amount: &Decimal) {
         self.available += amount;
     }
 
-    pub fn withdraw(&mut self, amount: Decimal) {
+    pub fn withdraw(&mut self, amount: &Decimal) {
         self.available -= amount;
     }
 
-    pub fn dispute(&mut self, amount_disputed: Decimal) {
+    pub fn dispute(&mut self, amount_disputed: &Decimal) {
         self.available -= amount_disputed;
         self.held += amount_disputed;
     }
 
-    pub fn resolve(&mut self, amount_resolved: Decimal) {
+    pub fn resolve(&mut self, amount_resolved: &Decimal) {
         self.held -= amount_resolved;
         self.available += amount_resolved;
     }
 
-    pub fn chargeback(&mut self, amount_chargedback: Decimal) {
+    pub fn chargeback(&mut self, amount_chargedback: &Decimal) {
         self.held -= amount_chargedback;
         self.locked = true;
     }
