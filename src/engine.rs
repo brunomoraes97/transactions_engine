@@ -17,12 +17,22 @@ impl Engine {
 
     pub fn deposit(&mut self, transaction: &Transaction) {
         let account = self.get_or_create_account(transaction.client_id());
-        account.deposit(transaction.amount());
+        if let Err(error) = account.deposit(transaction.amount()) {
+            eprintln!(
+                "An error occurred: {:?}",
+                error,
+            )
+        };
     }
 
     pub fn withdraw(&mut self, transaction: &Transaction) {
         let account = self.get_or_create_account(transaction.client_id());
-        account.withdraw(transaction.amount());
+        if let Err(error) = account.withdraw(transaction.amount()) {
+            eprintln!(
+                "An error occurred: {:?}",
+                error,
+            )
+        };
     }
 
     pub fn dispute(&mut self, transaction: &Transaction) {
@@ -40,7 +50,12 @@ impl Engine {
             .entry(client_id)
             .or_insert_with(|| Account::new(client_id));
 
-        account.dispute(amount_disputed);
+        if let Err(error) = account.dispute(amount_disputed) {
+            eprintln!(
+                "An error occurred: {:?}",
+                error,
+            )
+        };
     }
 
     pub fn resolve(&mut self, transaction: &Transaction) {
@@ -58,7 +73,12 @@ impl Engine {
             .entry(client_id)
             .or_insert_with(|| Account::new(client_id));
 
-        account.resolve(amount_resolved);
+        if let Err(error) = account.resolve(amount_resolved) {
+            eprintln!(
+                "An error occurred: {:?}",
+                error,
+            )
+        };
 
 
     }
@@ -78,7 +98,12 @@ impl Engine {
             .entry(client_id)
             .or_insert_with(|| Account::new(client_id));
 
-        account.chargeback(chargedback_amount);
+        if let Err(error) = account.chargeback(chargedback_amount) {
+            eprintln!(
+                "An error occurred: {:?}",
+                error,
+            )
+        };
 
 
     }

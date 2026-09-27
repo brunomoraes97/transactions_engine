@@ -23,21 +23,6 @@ pub struct Transaction {
 
 impl Transaction {
 
-    pub fn new(
-        transaction_type: TransactionType,
-        client_id: u16,
-        tx: u32,
-        amount: Decimal
-    ) -> Self {
-        Self {
-            transaction_type,
-            client_id,
-            tx,
-            amount,
-        }
-    }
-
-
     pub fn transaction_type(&self) -> &TransactionType {
         &self.transaction_type
     }
