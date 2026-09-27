@@ -83,8 +83,6 @@ impl Account {
         Ok(())
     }
 
-    /*
-
     pub fn dispute(&mut self, amount_disputed: &Decimal) -> Result<(), AccountError> {
 
         if *amount_disputed <= Decimal::ZERO {
@@ -100,6 +98,8 @@ impl Account {
 
         Ok(())
     }
+
+    /*
 
     pub fn resolve(&mut self, amount_resolved: &Decimal) -> Result<(), AccountError> {
 
@@ -249,6 +249,21 @@ mod tests {
         assert!(account.withdraw(&amount).is_err());
         assert_eq!(account.available, Decimal::new(10,0));
         assert_eq!(account.total, (account.available + account.held));  
+    }
+
+    #[test]
+    fn dispute_happens_normally() {
+        // TODO: use arrange + act + assert
+    }
+
+    #[test]
+    fn dispute_does_not_happen_with_invalid_amount() {
+        // TODO: use arrange + act + assert
+    }
+
+    #[test]
+    fn dispute_does_not_happen_with_locked_account() {
+        // TODO: use arrange + act + assert
     }
 
 

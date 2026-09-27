@@ -314,4 +314,14 @@ use super::*;
         );
     }
 
+    #[test]
+    fn state_is_correctly_changed_after_successful_dispute() {
+        // TODO: use arrange + act + assert
+    }
+
+    #[test]
+    fn state_is_not_changed_after_unsuccessful_dispute() {
+        // TODO: use arrange + act + assert
+    }
+
 }
