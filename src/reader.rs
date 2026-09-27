@@ -1,10 +1,11 @@
-use crate::transactions;
+use crate::{engine::Engine, transactions::TransactionAttempt};
 
 use std::env;
 use std::io;
-use transactions::TransactionAttempt;
 
-pub fn get_transactions_from_csv() -> Result<Vec<TransactionAttempt>, Box<dyn std::error::Error>> {
+pub fn process_transactions_from_csv(
+    engine: &mut Engine,
+) -> Result<(), Box<dyn std::error::Error>> {
     let file_path = env::args()
         .nth(1)
         .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "Could not load csv file."))?;
@@ -13,12 +14,10 @@ pub fn get_transactions_from_csv() -> Result<Vec<TransactionAttempt>, Box<dyn st
         .trim(csv::Trim::All)
         .from_path(&file_path)?;
 
-    let mut transactions: Vec<TransactionAttempt> = Vec::new();
-
     for transaction_result in csv_reader.deserialize() {
         let transaction: TransactionAttempt = transaction_result?;
-        transactions.push(transaction);
+        engine.process(transaction);
     }
 
-    Ok(transactions)
+    Ok(())
 }

@@ -6,28 +6,23 @@ mod state;
 mod transactions;
 
 use engine::Engine;
+use std::process::ExitCode;
 
-fn main() {
-    
+fn main() -> ExitCode {
     // Initiate engine
     let mut engine = Engine::new();
 
-    // Read transactions from the csv file in arguments
-    let transactions = match reader::get_transactions_from_csv() {
-        Ok(transactions) => transactions,
-        Err(error) => {
-            eprintln!("Could not read transactions: {}", error);
-            return;
-        }
-    };
-
-    // Process transactions
-    for transaction in transactions {
-        engine.process(transaction);
+    // Read and process transactions from the csv file in arguments
+    if let Err(error) = reader::process_transactions_from_csv(&mut engine) {
+        eprintln!("Could not process transactions: {}", error);
+        return ExitCode::FAILURE;
     }
 
     // Output the list of accounts
     if let Err(error) = engine.write_accounts_to_csv(std::io::stdout()) {
         eprintln!("Could not write accounts: {}", error);
+        return ExitCode::FAILURE;
     }
+
+    ExitCode::SUCCESS
 }
