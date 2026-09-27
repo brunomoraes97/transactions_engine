@@ -865,4 +865,74 @@ mod tests {
 
         assert_eq!(transaction.in_dispute(), &true);
     }
+
+    #[test]
+    fn pending_disputes_can_be_completed_after_account_is_locked() {
+        // Arrange
+        let mut engine = Engine::new();
+        let client_id = 1;
+
+        for transaction_id in 1..=3 {
+            let deposit_attempt = TransactionAttempt::new_with_fields(
+                TransactionType::Deposit,
+                client_id,
+                transaction_id,
+                Decimal::new(5, 0),
+            );
+            engine.process(deposit_attempt);
+
+            let dispute_attempt = TransactionAttempt::new_with_fields(
+                TransactionType::Dispute,
+                client_id,
+                transaction_id,
+                Decimal::ZERO,
+            );
+            engine.process(dispute_attempt);
+        }
+
+        let first_chargeback_attempt = TransactionAttempt::new_with_fields(
+            TransactionType::Chargeback,
+            client_id,
+            1,
+            Decimal::ZERO,
+        );
+        engine.process(first_chargeback_attempt);
+
+        // Act
+        let resolve_attempt = TransactionAttempt::new_with_fields(
+            TransactionType::Resolve,
+            client_id,
+            2,
+            Decimal::ZERO,
+        );
+        engine.process(resolve_attempt);
+
+        let second_chargeback_attempt = TransactionAttempt::new_with_fields(
+            TransactionType::Chargeback,
+            client_id,
+            3,
+            Decimal::ZERO,
+        );
+        engine.process(second_chargeback_attempt);
+
+        // Assert
+        let account = engine
+            .state
+            .get_account(&client_id)
+            .expect("locked account should still exist");
+
+        assert_eq!(account.available(), &Decimal::new(5, 0));
+        assert_eq!(account.held(), &Decimal::ZERO);
+        assert_eq!(account.total(), &Decimal::new(5, 0));
+        assert_eq!(account.locked(), &true);
+
+        for transaction_id in 1..=3 {
+            let transaction = engine
+                .state
+                .get_successful_transaction(&transaction_id)
+                .expect("successful transaction should still exist");
+
+            assert_eq!(transaction.in_dispute(), &false);
+        }
+    }
 }
