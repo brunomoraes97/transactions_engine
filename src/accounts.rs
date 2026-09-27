@@ -365,4 +365,19 @@ mod tests {
         assert!(!account.locked);
     }
 
+    #[test]
+    fn clients_held_and_total_funds_decrease_by_disputed_amount_after_successful_chargeback() {
+        // TODO
+    }
+
+    #[test]
+    fn clients_account_is_locked_after_chargeback() {
+        // TODO
+    }
+
+    #[test]
+    fn chargeback_is_ignored_and_prints_err_to_stdout_when_tx_is_invalid() {
+        // TODO
+    }
+
 }

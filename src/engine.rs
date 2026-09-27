@@ -492,4 +492,13 @@ use super::*;
         assert_eq!(account.locked(), &false);
     }
 
+    #[test]
+    fn state_is_correctly_changed_after_successful_chargeback() {
+        // TODO: use arrange + act + assert
+    }
+
+    #[test]
+    fn state_is_not_changed_after_unsuccessful_chargeback() {
+        // TODO: use arrange + act + assert
+    }
 }
