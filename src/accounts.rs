@@ -30,8 +30,8 @@ impl Account {
         }
     }
 
-    
-    pub fn new_with_fields(
+    #[cfg(test)]
+    pub(crate) fn new_with_fields(
         client_id: u16,
         available: Decimal,
         held: Decimal,

@@ -154,29 +154,6 @@ impl Engine {
 
     }
 
-    /*
-
-    pub fn save_transaction(&mut self, transaction: Transaction) -> &Transaction{
-        
-        self.transactions
-            .entry(*transaction.tx())
-            .or_insert(transaction)
-    }
-
-    pub fn get_all_accounts_in_csv(self) {
-        
-        let mut stdout_writer = csv::Writer::from_writer(std::io::stdout());
-
-        for (_, account) in self.accounts {
-            stdout_writer.serialize(account).unwrap();
-        }
-
-        stdout_writer.flush().unwrap();
-
-    }
-
-
-    */
 }
 
 #[cfg(test)]

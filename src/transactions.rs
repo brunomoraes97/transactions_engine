@@ -33,7 +33,8 @@ pub struct SuccessfulTransaction {
 
 impl TransactionAttempt {
 
-    pub fn new_with_fields(
+    #[cfg(test)]
+    pub(crate) fn new_with_fields(
         transaction_type: TransactionType,
         client_id: u16,
         tx: u32,

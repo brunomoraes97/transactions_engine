@@ -15,7 +15,8 @@ impl State {
         }
     }
 
-    pub fn get_account(&mut self, account_id: &u16) -> Option<&mut Account> {
+    #[cfg(test)]
+    pub(crate) fn get_account(&mut self, account_id: &u16) -> Option<&mut Account> {
         self.accounts_registry.get_mut(account_id)
     }
 
