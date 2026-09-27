@@ -39,14 +39,11 @@ impl Engine {
             account.deposit(transaction_attempt.amount())
         };
 
-        match result {
-            Ok(()) => {
-                self.state.save_successful_transaction(transaction_attempt);
-            }
-            Err(error) => {
-                eprintln!("An error occurred: {:?}", error);
-            }
+        if result.is_err() {
+            return;
         }
+
+        self.state.save_successful_transaction(transaction_attempt);
     }
 
     pub fn withdraw(&mut self, transaction_attempt: TransactionAttempt) {
@@ -58,14 +55,11 @@ impl Engine {
             account.withdraw(transaction_attempt.amount())
         };
 
-        match result {
-            Ok(()) => {
-                self.state.save_successful_transaction(transaction_attempt);
-            }
-            Err(error) => {
-                eprintln!("An error occurred: {:?}", error);
-            }
+        if result.is_err() {
+            return;
         }
+
+        self.state.save_successful_transaction(transaction_attempt);
     }
 
     pub fn dispute(&mut self, transaction_attempt: TransactionAttempt) {
@@ -86,11 +80,11 @@ impl Engine {
             account.dispute(&amount_disputed)
         };
 
-        if let Err(error) = result {
-            eprintln!("An error occurred: {:?}", error);
-        } else {
-            self.state.mark_transaction_as_disputed(&tx);
+        if result.is_err() {
+            return;
         }
+
+        self.state.mark_transaction_as_disputed(&tx);
     }
 
     pub fn resolve(&mut self, transaction_attempt: TransactionAttempt) {
@@ -108,11 +102,11 @@ impl Engine {
             account.resolve(&amount_disputed)
         };
 
-        if let Err(error) = result {
-            eprintln!("An error occurred: {:?}", error);
-        } else {
-            self.state.clear_transaction_dispute(&tx);
+        if result.is_err() {
+            return;
         }
+
+        self.state.clear_transaction_dispute(&tx);
     }
 
     pub fn chargeback(&mut self, transaction_attempt: TransactionAttempt) {
@@ -130,11 +124,11 @@ impl Engine {
             account.chargeback(&amount_disputed)
         };
 
-        if let Err(error) = result {
-            eprintln!("An error occurred: {:?}", error);
-        } else {
-            self.state.clear_transaction_dispute(&tx);
+        if result.is_err() {
+            return;
         }
+
+        self.state.clear_transaction_dispute(&tx);
     }
 }
 
