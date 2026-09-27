@@ -322,18 +322,48 @@ mod tests {
 
     #[test]
     fn resolve_happens_normally() {
-        // TODO: use arrange + act + assert
-        // The client held funds should decrease by the amount no longer disputed,
-        // their available funds should increase by the amount no longer disputed,
-        // and their total funds should remain the same.
+        // Arrange
+        let mut account = Account::new_with_fields(
+            1,
+            Decimal::new(5, 0),
+            Decimal::new(5, 0),
+            false,
+            Decimal::new(10, 0),
+        );
+        let resolved_amount = Decimal::new(5, 0);
+
+        // Act
+        let result = account.resolve(&resolved_amount);
+
+        // Assert
+        assert!(result.is_ok());
+        assert_eq!(account.available, Decimal::new(10, 0));
+        assert_eq!(account.held, Decimal::ZERO);
+        assert_eq!(account.total, Decimal::new(10, 0));
+        assert!(!account.locked);
     }
 
     #[test]
-    fn resolve_does_not_happen_with_invalid_tx() {
-        // TODO: use arrange + act + assert
-        // If the tx specified doesn't exist, or the tx isn't under dispute,
-        // The account should ignore the resolve
-        // and eprintln! an error.
+    fn resolve_does_not_happen_with_invalid_amount() {
+        // Arrange
+        let mut account = Account::new_with_fields(
+            1,
+            Decimal::new(5, 0),
+            Decimal::new(5, 0),
+            false,
+            Decimal::new(10, 0),
+        );
+        let invalid_amount = Decimal::ZERO;
+
+        // Act
+        let result = account.resolve(&invalid_amount);
+
+        // Assert
+        assert!(matches!(result, Err(AccountError::InvalidAmount)));
+        assert_eq!(account.available, Decimal::new(5, 0));
+        assert_eq!(account.held, Decimal::new(5, 0));
+        assert_eq!(account.total, Decimal::new(10, 0));
+        assert!(!account.locked);
     }
 
 }

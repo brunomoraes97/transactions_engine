@@ -431,12 +431,85 @@ use super::*;
 
     #[test]
     fn state_is_correctly_changed_after_successful_resolve() {
-        // TODO: use arrange + act + assert
+
+        // Arrange
+        let mut engine = Engine::new();
+        let client_id = 1;
+        let transaction_id = 1;
+
+        let account = Account::new_with_fields(
+            client_id,
+            Decimal::new(5, 0),
+            Decimal::new(5, 0),
+            false,
+            Decimal::new(10, 0),
+        );
+        *engine.state.get_or_create_account(&client_id) = account;
+
+        let successful_transaction = TransactionAttempt::new_with_fields(
+            TransactionType::Deposit,
+            client_id,
+            transaction_id,
+            Decimal::new(5, 0),
+        );
+        engine.state.save_successful_transaction(successful_transaction);
+
+        let resolve_attempt = TransactionAttempt::new_with_fields(
+            TransactionType::Resolve,
+            client_id,
+            transaction_id,
+            Decimal::ZERO,
+        );
+
+        // Act
+        engine.process(resolve_attempt);
+
+        // Assert
+        let account = engine
+            .state
+            .get_account(&client_id)
+            .expect("account should exist after a successful resolve");
+
+        assert_eq!(account.available(), &Decimal::new(10, 0));
+        assert_eq!(account.held(), &Decimal::ZERO);
+        assert_eq!(account.total(), &Decimal::new(10, 0));
+        assert_eq!(account.locked(), &false);
     }
 
     #[test]
     fn state_is_not_changed_after_unsuccessful_resolve() {
-        // TODO: use arrange + act + assert
+        // Arrange
+        let mut engine = Engine::new();
+        let client_id = 1;
+        let missing_transaction_id = 999;
+
+        let account = Account::new_with_fields(
+            client_id,
+            Decimal::new(5, 0),
+            Decimal::new(5, 0),
+            false,
+            Decimal::new(10, 0),
+        );
+        *engine.state.get_or_create_account(&client_id) = account;
+
+        let resolve_attempt = TransactionAttempt::new_with_fields(
+            TransactionType::Resolve,
+            client_id,
+            missing_transaction_id,
+            Decimal::ZERO,
+        );
+
+        // Act
+        engine.process(resolve_attempt);
+
+        // Assert
+        let account = engine.state.get_account(&client_id)
+            .expect("account should still exist after a rejected resolve");
+
+        assert_eq!(account.available(), &Decimal::new(5, 0));
+        assert_eq!(account.held(), &Decimal::new(5, 0));
+        assert_eq!(account.total(), &Decimal::new(10, 0));
+        assert_eq!(account.locked(), &false);
     }
 
 }
