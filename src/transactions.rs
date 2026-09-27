@@ -25,9 +25,7 @@ pub struct TransactionAttempt {
 #[derive(Getters)]
 #[getset(get = "pub")]
 pub struct SuccessfulTransaction {
-    transaction_type: TransactionType,
     client_id: u16,
-    tx: u32,
     amount: Decimal,
     in_dispute: bool,
 }
@@ -76,18 +74,9 @@ impl From<TransactionAttempt> for SuccessfulTransaction {
 
     fn from(attempt: TransactionAttempt) -> Self {
         
-        let TransactionAttempt {
-            transaction_type,
-            client_id,
-            tx,
-            amount,
-        } = attempt;
-
         Self {
-            transaction_type,
-            client_id,
-            tx,
-            amount,
+            client_id: *attempt.client_id(),
+            amount: *attempt.amount(),
             in_dispute: false,
         }
     }
