@@ -18,7 +18,7 @@ impl Engine {
             TransactionType::Deposit => self.deposit(transaction_attempt),
             TransactionType::Withdrawal => self.withdraw(transaction_attempt),
             TransactionType::Dispute => self.dispute(transaction_attempt),
-            TransactionType::Resolve => todo!(),
+            TransactionType::Resolve => self.resolve(transaction_attempt),
             TransactionType::Chargeback => todo!(),
         }
 
@@ -47,7 +47,6 @@ impl Engine {
             }
         }
     }
-
 
     pub fn withdraw(&mut self, transaction_attempt: TransactionAttempt) {
 
@@ -98,55 +97,36 @@ impl Engine {
             eprintln!("An error occurred: {:?}", error);
         }
     }
+
+    pub fn resolve(&mut self, transaction_attempt: TransactionAttempt) {
+        
+        let search_transaction = self
+            .state
+            .get_successful_transaction(transaction_attempt.tx());
+
+        let successful_transaction = match search_transaction {
+            Some(transaction) => transaction,
+            None => return,
+        };
+
+        let client_id = *successful_transaction.client_id();
+        let amount_disputed = *successful_transaction.amount();
+
+        let result = {
+            let account = self
+                .state
+                .get_or_create_account(&client_id);
+            account.resolve(&amount_disputed)
+        };
+
+        if let Err(error) = result {
+            eprintln!("An error occurred: {:?}", error);
+        }
+        
+
+    }
+
     /*
-
-    pub fn dispute(&mut self, transaction: &Transaction) {
-
-        let (client_id, amount_disputed) = match self.transactions.get(transaction.tx()) {
-            Some(disputed_transaction) => (
-                *disputed_transaction.client_id(),
-                disputed_transaction.amount(),
-            ),
-            None => return,
-        };
-
-        let account = self
-            .accounts
-            .entry(client_id)
-            .or_insert_with(|| Account::new(client_id));
-
-        if let Err(error) = account.dispute(amount_disputed) {
-            eprintln!(
-                "An error occurred: {:?}",
-                error,
-            )
-        };
-    }
-
-    pub fn resolve(&mut self, transaction: &Transaction) {
-
-        let (client_id, amount_resolved) = match self.transactions.get(transaction.tx()) {
-            Some(resolved_transaction) => (
-                *resolved_transaction.client_id(),
-                resolved_transaction.amount(),
-            ),
-            None => return,
-        };
-
-        let account = self
-            .accounts
-            .entry(client_id)
-            .or_insert_with(|| Account::new(client_id));
-
-        if let Err(error) = account.resolve(amount_resolved) {
-            eprintln!(
-                "An error occurred: {:?}",
-                error,
-            )
-        };
-
-
-    }
 
     pub fn chargeback(&mut self, transaction: &Transaction) {
 

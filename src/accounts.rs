@@ -99,8 +99,6 @@ impl Account {
         Ok(())
     }
 
-    /*
-
     pub fn resolve(&mut self, amount_resolved: &Decimal) -> Result<(), AccountError> {
 
         if *amount_resolved <= Decimal::ZERO {
@@ -113,6 +111,7 @@ impl Account {
         Ok(())
     }
 
+    /*
     pub fn chargeback(&mut self, amount_chargedback: &Decimal) -> Result<(), AccountError> {
 
         if *amount_chargedback <= Decimal::ZERO {
