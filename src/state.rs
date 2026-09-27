@@ -29,6 +29,10 @@ impl State {
             .or_insert_with(|| Account::new(*account_id))
     }
 
+    pub fn accounts(&self) -> impl Iterator<Item = &Account> {
+        self.accounts_registry.values()
+    }
+
     pub fn save_successful_transaction(&mut self, transaction_attempt: TransactionAttempt) {
         self.transaction_registry
             .entry(*transaction_attempt.tx())

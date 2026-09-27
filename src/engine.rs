@@ -1,7 +1,9 @@
 use crate::{
+    output,
     state::State,
     transactions::{TransactionAttempt, TransactionType},
 };
+use std::io::Write;
 
 pub struct Engine {
     state: State,
@@ -22,6 +24,10 @@ impl Engine {
             TransactionType::Resolve => self.resolve(transaction_attempt),
             TransactionType::Chargeback => self.chargeback(transaction_attempt),
         }
+    }
+
+    pub fn write_accounts_to_csv<W: Write>(&self, writer: W) -> Result<(), csv::Error> {
+        output::write_accounts_to_csv(&self.state, writer)
     }
 
     pub fn deposit(&mut self, transaction_attempt: TransactionAttempt) {

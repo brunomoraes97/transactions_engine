@@ -1,5 +1,6 @@
 mod accounts;
 mod engine;
+mod output;
 mod reader;
 mod state;
 mod transactions;
@@ -25,5 +26,7 @@ fn main() {
     }
 
     // Output the list of accounts
-    todo!();
+    if let Err(error) = engine.write_accounts_to_csv(std::io::stdout()) {
+        eprintln!("Could not write accounts: {}", error);
+    }
 }

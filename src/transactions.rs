@@ -1,6 +1,5 @@
 use getset::Getters;
 use rust_decimal::Decimal;
-use serde;
 
 #[derive(Debug, serde::Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -19,7 +18,7 @@ pub struct TransactionAttempt {
     #[serde(rename = "client")]
     client_id: u16,
     tx: u32,
-    amount: Decimal,
+    amount: Option<Decimal>,
 }
 
 #[derive(Getters)]
@@ -48,7 +47,7 @@ impl TransactionAttempt {
             transaction_type,
             client_id,
             tx,
-            amount,
+            amount: Some(amount),
         }
     }
 
@@ -65,15 +64,21 @@ impl TransactionAttempt {
     }
 
     pub fn amount(&self) -> &Decimal {
-        &self.amount
+        self.amount.as_ref().unwrap_or(&Decimal::ZERO)
     }
 }
 
 impl From<TransactionAttempt> for SuccessfulTransaction {
     fn from(attempt: TransactionAttempt) -> Self {
+        let TransactionAttempt {
+            client_id,
+            amount,
+            ..
+        } = attempt;
+
         Self {
-            client_id: *attempt.client_id(),
-            amount: *attempt.amount(),
+            client_id,
+            amount: amount.expect("a successful transaction must have an amount"),
             in_dispute: false,
         }
     }

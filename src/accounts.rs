@@ -4,11 +4,12 @@ use rust_decimal::Decimal;
 #[derive(Debug, serde::Serialize, Getters)]
 #[getset(get = "pub")]
 pub struct Account {
+    #[serde(rename = "client")]
     client_id: u16,
     available: Decimal,
     held: Decimal,
-    locked: bool,
     total: Decimal,
+    locked: bool,
 }
 #[derive(Debug)]
 pub enum AccountError {
