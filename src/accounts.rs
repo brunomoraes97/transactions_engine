@@ -320,5 +320,20 @@ mod tests {
         assert!(account.locked);
     }
 
+    #[test]
+    fn resolve_happens_normally() {
+        // TODO: use arrange + act + assert
+        // The client held funds should decrease by the amount no longer disputed,
+        // their available funds should increase by the amount no longer disputed,
+        // and their total funds should remain the same.
+    }
+
+    #[test]
+    fn resolve_does_not_happen_with_invalid_tx() {
+        // TODO: use arrange + act + assert
+        // If the tx specified doesn't exist, or the tx isn't under dispute,
+        // The account should ignore the resolve
+        // and eprintln! an error.
+    }
 
 }
