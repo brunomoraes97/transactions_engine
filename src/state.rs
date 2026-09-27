@@ -41,4 +41,10 @@ impl State {
 
     }
 
+    pub fn mark_transaction_as_disputed(&mut self, tx: &u32) {
+        if let Some(transaction) = self.transaction_registry.get_mut(tx) {
+            transaction.set_in_dispute(true);
+        }
+    }
+
 }

@@ -29,6 +29,13 @@ pub struct SuccessfulTransaction {
     client_id: u16,
     tx: u32,
     amount: Decimal,
+    in_dispute: bool,
+}
+
+impl SuccessfulTransaction {
+    pub fn set_in_dispute(&mut self, setting: bool) {
+        self.in_dispute = setting;
+    }
 }
 
 impl TransactionAttempt {
@@ -81,6 +88,7 @@ impl From<TransactionAttempt> for SuccessfulTransaction {
             client_id,
             tx,
             amount,
+            in_dispute: false,
         }
     }
 }

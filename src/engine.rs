@@ -74,27 +74,31 @@ impl Engine {
 
     pub fn dispute(&mut self, transaction_attempt: TransactionAttempt) {
 
-        let search_transaction = self
+        let tx = *transaction_attempt.tx();
+
+        let (client_id, amount_disputed) = match self
             .state
-            .get_successful_transaction(transaction_attempt.tx());
-
-        let successful_transaction = match search_transaction {
-                Some(transaction) => transaction,
-                None => return,
-            };
-
-        let client_id = *successful_transaction.client_id();
-        let amount_disputed = *successful_transaction.amount();
+            .get_successful_transaction(&tx)
+        {
+            Some(transaction) => (
+                *transaction.client_id(),
+                *transaction.amount(),
+            ),
+            None => return,
+        };
 
         let result = {
             let account = self
                 .state
                 .get_or_create_account(&client_id);
             account.dispute(&amount_disputed)
+
         };
 
         if let Err(error) = result {
             eprintln!("An error occurred: {:?}", error);
+        } else {
+            self.state.mark_transaction_as_disputed(&tx);
         }
     }
 
@@ -347,6 +351,65 @@ use super::*;
         assert_eq!(account.held(), &Decimal::new(5, 0));
         assert_eq!(account.total(), &Decimal::new(10, 0));
         assert_eq!(account.locked(), &false);
+
+        let transaction = engine
+            .state
+            .get_successful_transaction(&transaction_id)
+            .expect("transaction should exist after a successful dispute");
+
+        assert_eq!(transaction.in_dispute(), &true);
+    }
+
+    #[test]
+    fn second_dispute_of_the_same_transaction_is_ignored() {
+        // Arrange
+        let mut engine = Engine::new();
+        let client_id = 1;
+        let transaction_id = 1;
+
+        let account = Account::new_with_fields(
+            client_id,
+            Decimal::new(10, 0),
+            Decimal::ZERO,
+            false,
+            Decimal::new(10, 0),
+        );
+        *engine.state.get_or_create_account(&client_id) = account;
+
+        let successful_transaction = TransactionAttempt::new_with_fields(
+            TransactionType::Deposit,
+            client_id,
+            transaction_id,
+            Decimal::new(5, 0),
+        );
+        engine.state.save_successful_transaction(successful_transaction);
+
+        let first_dispute = TransactionAttempt::new_with_fields(
+            TransactionType::Dispute,
+            client_id,
+            transaction_id,
+            Decimal::ZERO,
+        );
+        engine.process(first_dispute);
+
+        let second_dispute = TransactionAttempt::new_with_fields(
+            TransactionType::Dispute,
+            client_id,
+            transaction_id,
+            Decimal::ZERO,
+        );
+
+        // Act
+        engine.process(second_dispute);
+
+        // Assert
+        let account = engine.state.get_account(&client_id)
+            .expect("account should exist after a repeated dispute");
+
+        assert_eq!(account.available(), &Decimal::new(5, 0));
+        assert_eq!(account.held(), &Decimal::new(5, 0));
+        assert_eq!(account.total(), &Decimal::new(10, 0));
+        assert_eq!(account.locked(), &false);
     }
 
     #[test]
@@ -413,6 +476,7 @@ use super::*;
             Decimal::new(5, 0),
         );
         engine.state.save_successful_transaction(successful_transaction);
+        engine.state.mark_transaction_as_disputed(&transaction_id);
 
         let resolve_attempt = TransactionAttempt::new_with_fields(
             TransactionType::Resolve,
@@ -434,6 +498,13 @@ use super::*;
         assert_eq!(account.held(), &Decimal::ZERO);
         assert_eq!(account.total(), &Decimal::new(10, 0));
         assert_eq!(account.locked(), &false);
+
+        let transaction = engine
+            .state
+            .get_successful_transaction(&transaction_id)
+            .expect("transaction should exist after a successful resolve");
+
+        assert_eq!(transaction.in_dispute(), &false);
     }
 
     #[test]
@@ -473,6 +544,50 @@ use super::*;
     }
 
     #[test]
+    fn state_is_not_changed_when_resolve_transaction_is_not_in_dispute() {
+        // Arrange
+        let mut engine = Engine::new();
+        let client_id = 1;
+        let transaction_id = 1;
+
+        let account = Account::new_with_fields(
+            client_id,
+            Decimal::new(10, 0),
+            Decimal::ZERO,
+            false,
+            Decimal::new(10, 0),
+        );
+        *engine.state.get_or_create_account(&client_id) = account;
+
+        let successful_transaction = TransactionAttempt::new_with_fields(
+            TransactionType::Deposit,
+            client_id,
+            transaction_id,
+            Decimal::new(5, 0),
+        );
+        engine.state.save_successful_transaction(successful_transaction);
+
+        let resolve_attempt = TransactionAttempt::new_with_fields(
+            TransactionType::Resolve,
+            client_id,
+            transaction_id,
+            Decimal::ZERO,
+        );
+
+        // Act
+        engine.process(resolve_attempt);
+
+        // Assert
+        let account = engine.state.get_account(&client_id)
+            .expect("account should still exist after a rejected resolve");
+
+        assert_eq!(account.available(), &Decimal::new(10, 0));
+        assert_eq!(account.held(), &Decimal::ZERO);
+        assert_eq!(account.total(), &Decimal::new(10, 0));
+        assert_eq!(account.locked(), &false);
+    }
+
+    #[test]
     fn state_is_correctly_changed_after_successful_chargeback() {
         // Arrange
         let mut engine = Engine::new();
@@ -495,6 +610,7 @@ use super::*;
             Decimal::new(5, 0),
         );
         engine.state.save_successful_transaction(successful_transaction);
+        engine.state.mark_transaction_as_disputed(&transaction_id);
 
         let chargeback_attempt = TransactionAttempt::new_with_fields(
             TransactionType::Chargeback,
@@ -548,6 +664,50 @@ use super::*;
 
         assert_eq!(account.available(), &Decimal::new(5, 0));
         assert_eq!(account.held(), &Decimal::new(5, 0));
+        assert_eq!(account.total(), &Decimal::new(10, 0));
+        assert_eq!(account.locked(), &false);
+    }
+
+    #[test]
+    fn state_is_not_changed_when_chargeback_transaction_is_not_in_dispute() {
+        // Arrange
+        let mut engine = Engine::new();
+        let client_id = 1;
+        let transaction_id = 1;
+
+        let account = Account::new_with_fields(
+            client_id,
+            Decimal::new(10, 0),
+            Decimal::ZERO,
+            false,
+            Decimal::new(10, 0),
+        );
+        *engine.state.get_or_create_account(&client_id) = account;
+
+        let successful_transaction = TransactionAttempt::new_with_fields(
+            TransactionType::Deposit,
+            client_id,
+            transaction_id,
+            Decimal::new(5, 0),
+        );
+        engine.state.save_successful_transaction(successful_transaction);
+
+        let chargeback_attempt = TransactionAttempt::new_with_fields(
+            TransactionType::Chargeback,
+            client_id,
+            transaction_id,
+            Decimal::ZERO,
+        );
+
+        // Act
+        engine.process(chargeback_attempt);
+
+        // Assert
+        let account = engine.state.get_account(&client_id)
+            .expect("account should still exist after a rejected chargeback");
+
+        assert_eq!(account.available(), &Decimal::new(10, 0));
+        assert_eq!(account.held(), &Decimal::ZERO);
         assert_eq!(account.total(), &Decimal::new(10, 0));
         assert_eq!(account.locked(), &false);
     }
