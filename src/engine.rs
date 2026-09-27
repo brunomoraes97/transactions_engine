@@ -66,8 +66,10 @@ impl Engine {
         let tx = *transaction_attempt.tx();
 
         let (client_id, amount_disputed) = match self.state.get_successful_transaction(&tx) {
-            Some(transaction) => (*transaction.client_id(), *transaction.amount()),
-            None => return,
+            Some(transaction) if !*transaction.in_dispute() => {
+                (*transaction.client_id(), *transaction.amount())
+            }
+            Some(_) | None => return,
         };
 
         let result = {
@@ -83,17 +85,14 @@ impl Engine {
     }
 
     pub fn resolve(&mut self, transaction_attempt: TransactionAttempt) {
-        let search_transaction = self
-            .state
-            .get_successful_transaction(transaction_attempt.tx());
+        let tx = *transaction_attempt.tx();
 
-        let successful_transaction = match search_transaction {
-            Some(transaction) => transaction,
-            None => return,
+        let (client_id, amount_disputed) = match self.state.get_successful_transaction(&tx) {
+            Some(transaction) if *transaction.in_dispute() => {
+                (*transaction.client_id(), *transaction.amount())
+            }
+            Some(_) | None => return,
         };
-
-        let client_id = *successful_transaction.client_id();
-        let amount_disputed = *successful_transaction.amount();
 
         let result = {
             let account = self.state.get_or_create_account(&client_id);
@@ -102,21 +101,20 @@ impl Engine {
 
         if let Err(error) = result {
             eprintln!("An error occurred: {:?}", error);
+        } else {
+            self.state.clear_transaction_dispute(&tx);
         }
     }
 
     pub fn chargeback(&mut self, transaction_attempt: TransactionAttempt) {
-        let search_transaction = self
-            .state
-            .get_successful_transaction(transaction_attempt.tx());
+        let tx = *transaction_attempt.tx();
 
-        let successful_transaction = match search_transaction {
-            Some(transaction) => transaction,
-            None => return,
+        let (client_id, amount_disputed) = match self.state.get_successful_transaction(&tx) {
+            Some(transaction) if *transaction.in_dispute() => {
+                (*transaction.client_id(), *transaction.amount())
+            }
+            Some(_) | None => return,
         };
-
-        let client_id = *successful_transaction.client_id();
-        let amount_disputed = *successful_transaction.amount();
 
         let result = {
             let account = self.state.get_or_create_account(&client_id);
@@ -125,6 +123,8 @@ impl Engine {
 
         if let Err(error) = result {
             eprintln!("An error occurred: {:?}", error);
+        } else {
+            self.state.clear_transaction_dispute(&tx);
         }
     }
 }
