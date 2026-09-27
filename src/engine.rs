@@ -17,7 +17,7 @@ impl Engine {
         match transaction_attempt.transaction_type() {
             TransactionType::Deposit => self.deposit(transaction_attempt),
             TransactionType::Withdrawal => self.withdraw(transaction_attempt),
-            TransactionType::Dispute => todo!(),
+            TransactionType::Dispute => self.dispute(transaction_attempt),
             TransactionType::Resolve => todo!(),
             TransactionType::Chargeback => todo!(),
         }
@@ -73,6 +73,31 @@ impl Engine {
 
     }
 
+    pub fn dispute(&mut self, transaction_attempt: TransactionAttempt) {
+
+        let search_transaction = self
+            .state
+            .get_successful_transaction(transaction_attempt.tx());
+
+        let successful_transaction = match search_transaction {
+                Some(transaction) => transaction,
+                None => return,
+            };
+
+        let client_id = *successful_transaction.client_id();
+        let amount_disputed = *successful_transaction.amount();
+
+        let result = {
+            let account = self
+                .state
+                .get_or_create_account(&client_id);
+            account.dispute(&amount_disputed)
+        };
+
+        if let Err(error) = result {
+            eprintln!("An error occurred: {:?}", error);
+        }
+    }
     /*
 
     pub fn dispute(&mut self, transaction: &Transaction) {

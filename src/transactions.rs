@@ -1,5 +1,6 @@
 use rust_decimal::Decimal;
 use serde;
+use getset::Getters;
 
 #[derive(Debug, serde::Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -21,6 +22,8 @@ pub struct TransactionAttempt {
     amount: Decimal,
 }
 
+#[derive(Getters)]
+#[getset(get = "pub")]
 pub struct SuccessfulTransaction {
     transaction_type: TransactionType,
     client_id: u16,

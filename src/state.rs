@@ -35,7 +35,7 @@ impl State {
 
     }
 
-    pub fn get_successful_transaction(&mut self, tx: &u32) -> Option<&SuccessfulTransaction> {
+    pub fn get_successful_transaction(&self, tx: &u32) -> Option<&SuccessfulTransaction> {
         self.transaction_registry.get(tx)
 
     }
