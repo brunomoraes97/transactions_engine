@@ -494,11 +494,81 @@ use super::*;
 
     #[test]
     fn state_is_correctly_changed_after_successful_chargeback() {
-        // TODO: use arrange + act + assert
+        // Arrange
+        let mut engine = Engine::new();
+        let client_id = 1;
+        let transaction_id = 1;
+
+        let account = Account::new_with_fields(
+            client_id,
+            Decimal::new(5, 0),
+            Decimal::new(5, 0),
+            false,
+            Decimal::new(10, 0),
+        );
+        *engine.state.get_or_create_account(&client_id) = account;
+
+        let successful_transaction = TransactionAttempt::new_with_fields(
+            TransactionType::Deposit,
+            client_id,
+            transaction_id,
+            Decimal::new(5, 0),
+        );
+        engine.state.save_successful_transaction(successful_transaction);
+
+        let chargeback_attempt = TransactionAttempt::new_with_fields(
+            TransactionType::Chargeback,
+            client_id,
+            transaction_id,
+            Decimal::ZERO,
+        );
+
+        // Act
+        engine.process(chargeback_attempt);
+
+        // Assert
+        let account = engine.state.get_account(&client_id)
+            .expect("account should exist after a successful chargeback");
+
+        assert_eq!(account.available(), &Decimal::new(5, 0));
+        assert_eq!(account.held(), &Decimal::ZERO);
+        assert_eq!(account.total(), &Decimal::new(5, 0));
+        assert_eq!(account.locked(), &true);
     }
 
     #[test]
     fn state_is_not_changed_after_unsuccessful_chargeback() {
-        // TODO: use arrange + act + assert
+        // Arrange
+        let mut engine = Engine::new();
+        let client_id = 1;
+        let missing_transaction_id = 999;
+
+        let account = Account::new_with_fields(
+            client_id,
+            Decimal::new(5, 0),
+            Decimal::new(5, 0),
+            false,
+            Decimal::new(10, 0),
+        );
+        *engine.state.get_or_create_account(&client_id) = account;
+
+        let chargeback_attempt = TransactionAttempt::new_with_fields(
+            TransactionType::Chargeback,
+            client_id,
+            missing_transaction_id,
+            Decimal::ZERO,
+        );
+
+        // Act
+        engine.process(chargeback_attempt);
+
+        // Assert
+        let account = engine.state.get_account(&client_id)
+            .expect("account should still exist after a rejected chargeback");
+
+        assert_eq!(account.available(), &Decimal::new(5, 0));
+        assert_eq!(account.held(), &Decimal::new(5, 0));
+        assert_eq!(account.total(), &Decimal::new(10, 0));
+        assert_eq!(account.locked(), &false);
     }
 }

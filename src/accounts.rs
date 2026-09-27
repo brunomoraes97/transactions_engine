@@ -367,17 +367,68 @@ mod tests {
 
     #[test]
     fn clients_held_and_total_funds_decrease_by_disputed_amount_after_successful_chargeback() {
-        // TODO
+        // Arrange
+        let mut account = Account::new_with_fields(
+            1,
+            Decimal::new(5, 0),
+            Decimal::new(5, 0),
+            false,
+            Decimal::new(10, 0),
+        );
+        let chargeback_amount = Decimal::new(5, 0);
+
+        // Act
+        let result = account.chargeback(&chargeback_amount);
+
+        // Assert
+        assert!(result.is_ok());
+        assert_eq!(account.available, Decimal::new(5, 0));
+        assert_eq!(account.held, Decimal::ZERO);
+        assert_eq!(account.total, Decimal::new(5, 0));
     }
 
     #[test]
     fn clients_account_is_locked_after_chargeback() {
-        // TODO
+        
+        // Arrange
+        let mut account = Account::new_with_fields(
+            1,
+            Decimal::new(5, 0),
+            Decimal::new(5, 0),
+            false,
+            Decimal::new(10, 0),
+        );
+        let chargeback_amount = Decimal::new(5, 0);
+
+        // Act
+        let result = account.chargeback(&chargeback_amount);
+
+        // Assert
+        assert!(result.is_ok());
+        assert!(account.locked);
     }
 
     #[test]
-    fn chargeback_is_ignored_and_prints_err_to_stdout_when_tx_is_invalid() {
-        // TODO
+    fn chargeback_does_not_happen_with_invalid_amount() {
+        // Arrange
+        let mut account = Account::new_with_fields(
+            1,
+            Decimal::new(5, 0),
+            Decimal::new(5, 0),
+            false,
+            Decimal::new(10, 0),
+        );
+        let invalid_amount = Decimal::ZERO;
+
+        // Act
+        let result = account.chargeback(&invalid_amount);
+
+        // Assert
+        assert!(matches!(result, Err(AccountError::InvalidAmount)));
+        assert_eq!(account.available, Decimal::new(5, 0));
+        assert_eq!(account.held, Decimal::new(5, 0));
+        assert_eq!(account.total, Decimal::new(10, 0));
+        assert!(!account.locked);
     }
 
 }
