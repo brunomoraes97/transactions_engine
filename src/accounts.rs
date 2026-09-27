@@ -111,7 +111,7 @@ impl Account {
         Ok(())
     }
 
-    /*
+    
     pub fn chargeback(&mut self, amount_chargedback: &Decimal) -> Result<(), AccountError> {
 
         if *amount_chargedback <= Decimal::ZERO {
@@ -119,12 +119,12 @@ impl Account {
         }
 
         self.held -= amount_chargedback;
+        self.total -= amount_chargedback;
         self.locked = true;
 
         Ok(())
     }
 
-    */
 
 }
 
@@ -389,7 +389,7 @@ mod tests {
 
     #[test]
     fn clients_account_is_locked_after_chargeback() {
-        
+
         // Arrange
         let mut account = Account::new_with_fields(
             1,
