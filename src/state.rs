@@ -34,4 +34,10 @@ impl State {
             .or_insert_with(|| SuccessfulTransaction::from(transaction_attempt));
 
     }
+
+    pub fn get_successful_transaction(&mut self, tx: &u32) -> Option<&SuccessfulTransaction> {
+        self.transaction_registry.get(tx)
+
+    }
+
 }

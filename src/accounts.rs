@@ -12,7 +12,7 @@ pub struct Account {
 }
 #[derive(Debug)]
 pub enum AccountError {
-    //InsufficientFunds,
+    InsufficientFunds,
     InvalidAmount,
     AccountLocked,
 }
@@ -30,7 +30,7 @@ impl Account {
         }
     }
 
-    /*
+    
     pub fn new_with_fields(
         client_id: u16,
         available: Decimal,
@@ -46,7 +46,7 @@ impl Account {
             total,
         }
     }
-    */
+    
 
     pub fn deposit(&mut self, amount: &Decimal) -> Result<(), AccountError> {
 
@@ -63,7 +63,6 @@ impl Account {
         Ok(())
     }
 
-    /*
     pub fn withdraw(&mut self, amount: &Decimal) -> Result<(), AccountError> {
 
         if *amount <= Decimal::ZERO {
@@ -83,6 +82,8 @@ impl Account {
 
         Ok(())
     }
+
+    /*
 
     pub fn dispute(&mut self, amount_disputed: &Decimal) -> Result<(), AccountError> {
 
@@ -171,6 +172,83 @@ mod tests {
                 Err(AccountError::AccountLocked),
             )
         );
+    }
+
+    #[test]
+    fn withdrawal_happens_normally_happy_path() {
+        
+        let mut account = Account::new_with_fields(
+            1,
+            Decimal::new(10,0),
+            Decimal::ZERO,
+            false,
+            Decimal::new(10,0)
+        );
+
+
+        let amount = Decimal::new(5,0);
+        
+        assert!(account.withdraw(&amount).is_ok());
+        assert_eq!(account.available, Decimal::new(5,0));
+        assert_eq!(account.total, (account.available + account.held));
+    }
+
+    #[test]
+    fn withdrawal_does_not_happen_with_invalid_amount() {
+
+        let mut account = Account::new_with_fields(
+    1,
+    Decimal::new(0,0),
+    Decimal::ZERO,
+    false,
+    Decimal::new(0,0)
+        );
+
+
+        let amount = Decimal::new(-5,0);
+        
+        assert!(account.withdraw(&amount).is_err());
+        assert_eq!(account.available, Decimal::new(0,0));
+        assert_eq!(account.total, (account.available + account.held));
+
+    }
+
+    #[test]
+    fn withdrawl_does_not_happen_with_insufficient_funds() {
+
+        let mut account = Account::new_with_fields(
+    1,
+    Decimal::new(0,0),
+    Decimal::ZERO,
+    false,
+    Decimal::new(0,0)
+        );
+
+
+        let amount = Decimal::new(5,0);
+        
+        assert!(account.withdraw(&amount).is_err());
+        assert_eq!(account.available, Decimal::new(0,0));
+        assert_eq!(account.total, (account.available + account.held));
+    }   
+    
+    #[test]
+    fn withdrawal_does_not_happen_with_account_locked() {
+    
+        let mut account = Account::new_with_fields(
+    1,
+    Decimal::new(10,0),
+    Decimal::ZERO,
+    true,
+    Decimal::new(10,0)
+        );
+
+
+        let amount = Decimal::new(5,0);
+        
+        assert!(account.withdraw(&amount).is_err());
+        assert_eq!(account.available, Decimal::new(10,0));
+        assert_eq!(account.total, (account.available + account.held));  
     }
 
 

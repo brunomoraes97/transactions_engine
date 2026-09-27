@@ -16,7 +16,7 @@ impl Engine {
 
         match transaction_attempt.transaction_type() {
             TransactionType::Deposit => self.deposit(transaction_attempt),
-            TransactionType::Withdrawal => todo!(),
+            TransactionType::Withdrawal => self.withdraw(transaction_attempt),
             TransactionType::Dispute => todo!(),
             TransactionType::Resolve => todo!(),
             TransactionType::Chargeback => todo!(),
@@ -48,17 +48,32 @@ impl Engine {
         }
     }
 
-    /*
 
-    pub fn withdraw(&mut self, transaction: &Transaction) {
-        let account = self.get_or_create_account(transaction.client_id());
-        if let Err(error) = account.withdraw(transaction.amount()) {
-            eprintln!(
-                "An error occurred: {:?}",
-                error,
-            )
+    pub fn withdraw(&mut self, transaction_attempt: TransactionAttempt) {
+
+        let result = {
+
+            let account = self
+                .state
+                .get_or_create_account(transaction_attempt.client_id());
+
+            account.withdraw(transaction_attempt.amount())
+
         };
+
+        match result {
+            Ok(()) => {
+                self.state
+                    .save_successful_transaction(transaction_attempt);
+            }
+            Err(error) => {
+                eprintln!("An error occurred: {:?}", error);
+            }
+        }
+
     }
+
+    /*
 
     pub fn dispute(&mut self, transaction: &Transaction) {
 
@@ -160,8 +175,9 @@ impl Engine {
 mod tests {
 
     use rust_decimal::Decimal;
+    use crate::accounts::Account;
 
-    use super::*;
+use super::*;
 
     #[test]
     fn state_is_correctly_changed_after_successful_deposit() {
@@ -208,6 +224,93 @@ mod tests {
         assert_eq!(
             account_deposited.available(),
             &Decimal::new(0,0)
+        );
+    }
+
+    #[test]
+    fn state_is_correctly_changed_after_successful_withdrawal() {
+        
+        let mut engine = Engine::new();
+        let client_id = 1;
+
+        let mock_account = Account::new_with_fields(
+            client_id,
+            Decimal::new(10, 0),
+            Decimal::ZERO,
+            false,
+            Decimal::new(10, 0),
+        );
+
+        let account = engine
+            .state
+            .get_or_create_account(&client_id);
+
+        *account = mock_account;
+
+        let attempt = TransactionAttempt::new_with_fields(
+            TransactionType::Withdrawal,
+            client_id,
+            1,
+            Decimal::new(5, 0),
+        );
+
+        engine.withdraw(attempt);
+
+        let account = engine
+            .state
+            .get_account(&client_id)
+            .expect("account should exist");
+
+        assert_eq!(account.available(), &Decimal::new(5, 0));
+        assert_eq!(account.total(), &Decimal::new(5, 0));
+
+    }
+
+    #[test]
+    fn state_is_not_changed_after_unsuccessful_withdrawal() {
+        
+        let mut engine = Engine::new();
+        let client_id = 1;
+        let transaction_id = 1;
+
+        let mock_account = Account::new_with_fields(
+            client_id,
+            Decimal::new(10, 0),
+            Decimal::ZERO,
+            false,
+            Decimal::new(10, 0),
+        );
+
+        *engine
+            .state
+            .get_or_create_account(&client_id) = mock_account;
+
+        let attempt = TransactionAttempt::new_with_fields(
+            TransactionType::Withdrawal,
+            client_id,
+            transaction_id,
+            Decimal::new(15, 0),
+        );
+
+        engine.withdraw(attempt);
+
+        {
+            let account = engine
+                .state
+                .get_account(&client_id)
+                .expect("account should still exist");
+
+            assert_eq!(account.available(), &Decimal::new(10, 0));
+            assert_eq!(account.held(), &Decimal::ZERO);
+            assert_eq!(account.total(), &Decimal::new(10, 0));
+            assert_eq!(account.locked(), &false);
+        }
+
+        assert!(
+            engine
+                .state
+                .get_successful_transaction(&transaction_id)
+                .is_none()
         );
     }
 
